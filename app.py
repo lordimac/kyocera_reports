@@ -13,10 +13,19 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('SQLALCHEMY_DATABASE_URI', 'sqlite:///data/kyocera_reports.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+# Ensure data directory exists
+os.makedirs('data', exist_ok=True)
+
 db.init_app(app)
 
 def run_scheduler():
-    schedule.every(10).minutes.do(fetch_emails)
+    # Only run scheduler if POP3 credentials are configured
+    if all([os.getenv('POP3_SERVER'), os.getenv('POP3_USERNAME'), os.getenv('POP3_PASSWORD')]):
+        schedule.every(10).minutes.do(fetch_emails)
+        print("Email scheduler started - fetching every 10 minutes")
+    else:
+        print("Warning: POP3 credentials not configured - email scheduler disabled")
+    
     while True:
         schedule.run_pending()
         time.sleep(1)

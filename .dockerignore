@@ -1,0 +1,59 @@
+# Git
+.git
+.gitignore
+.github
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info
+dist
+build
+
+# Virtual environments
+venv/
+env/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Testing
+.pytest_cache
+.coverage
+.hypothesis
+.tox
+htmlcov/
+
+# Logs
+*.log
+
+# Database files (should be in volume)
+*.db
+*.sqlite
+*.sqlite3
+data/
+
+# Environment files
+.env
+.env.local
+
+# Documentation
+README.md
+
+# Test files
+test.py
+export_job_logResponse.xml
+
+# OS files
+.DS_Store
+Thumbs.db

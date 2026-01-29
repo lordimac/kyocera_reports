@@ -23,6 +23,8 @@ coverage.xml
 *.db
 *.sqlite
 *.sqlite3
+kyocera_reports.db
+data/
 .env
 .env.local
 .env.*.local
