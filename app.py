@@ -30,10 +30,6 @@ def run_scheduler():
         schedule.run_pending()
         time.sleep(1)
 
-@app.before_request
-def create_tables():
-    db.create_all()
-
 @app.route('/')
 def index():
     printers = Printer.query.all()
@@ -108,6 +104,11 @@ def api_fetch_emails():
         return jsonify({'status': 'error', 'message': str(e)})
 
 if __name__ == '__main__':
+    # Initialize database
+    with app.app_context():
+        db.create_all()
+        print("Database initialized successfully")
+    
     # Start scheduler in background
     scheduler_thread = threading.Thread(target=run_scheduler)
     scheduler_thread.daemon = True
