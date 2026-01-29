@@ -9,12 +9,14 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# Ensure data directory exists with proper permissions
+data_dir = os.path.join(os.getcwd(), 'data')
+os.makedirs(data_dir, exist_ok=True)
+print(f"Data directory: {data_dir} (exists: {os.path.exists(data_dir)}, writable: {os.access(data_dir, os.W_OK)})")
+
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('SQLALCHEMY_DATABASE_URI', 'sqlite:///data/kyocera_reports.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
-# Ensure data directory exists
-os.makedirs('data', exist_ok=True)
 
 db.init_app(app)
 
@@ -106,8 +108,16 @@ def api_fetch_emails():
 if __name__ == '__main__':
     # Initialize database
     with app.app_context():
-        db.create_all()
-        print("Database initialized successfully")
+        try:
+            db.create_all()
+            print("Database initialized successfully")
+        except Exception as e:
+            print(f"Error initializing database: {e}")
+            print(f"Database URI: {app.config['SQLALCHEMY_DATABASE_URI']}")
+            print(f"Current working directory: {os.getcwd()}")
+            print(f"Data directory exists: {os.path.exists('data')}")
+            print(f"Data directory writable: {os.access('data', os.W_OK) if os.path.exists('data') else 'N/A'}")
+            raise
     
     # Start scheduler in background
     scheduler_thread = threading.Thread(target=run_scheduler)
