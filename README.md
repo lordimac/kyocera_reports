@@ -2,6 +2,8 @@
 
 A web application to analyze Kyocera printer XML logs fetched from POP3 emails, store data in a database, and provide statistical reports.
 
+![Screenshot](screenshot1.png)
+
 ## Features
 
 - Fetch XML logs from POP3 mailbox
