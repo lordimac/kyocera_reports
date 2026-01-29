@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Printer Statistics - {{ printer.equipment_id }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        body { background-color: #f8f9fa; }
+        .card { transition: transform 0.2s; }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .navbar { background: linear-gradient(90deg, #007bff, #0056b3); }
+        .table-hover tbody tr:hover { background-color: rgba(0, 123, 255, 0.1); }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/"><i class="bi bi-arrow-left me-2"></i>Zurück zur Übersicht</a>
+            <span class="navbar-text ms-auto">{{ printer.equipment_id }}</span>
+        </div>
+    </nav>
+    
+    <div class="container mt-5">
+        <div class="row">
+            <div class="col-12">
+                <h1 class="text-center mb-4"><i class="bi bi-bar-chart-line text-primary me-2"></i>Statistiken für {{ printer.equipment_id }}</h1>
+                <p class="text-center text-muted">Modell: {{ printer.model_name }} | Seriennummer: {{ printer.serial_number }}</p>
+            </div>
+        </div>
+        
+        <div class="row mb-4">
+            <div class="col-md-3 mb-3">
+                <div class="card text-white bg-primary h-100">
+                    <div class="card-body text-center">
+                        <i class="bi bi-file-earmark-text display-4 mb-2"></i>
+                        <h5 class="card-title">Gesamt Jobs</h5>
+                        <p class="card-text display-6">{{ total_jobs }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card text-white bg-success h-100">
+                    <div class="card-body text-center">
+                        <i class="bi bi-file-earmark display-4 mb-2"></i>
+                        <h5 class="card-title">Gesamt Seiten</h5>
+                        <p class="card-text display-6">{{ total_pages }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card text-white bg-info h-100">
+                    <div class="card-body text-center">
+                        <i class="bi bi-palette display-4 mb-2"></i>
+                        <h5 class="card-title">Farbseiten</h5>
+                        <p class="card-text display-6">{{ total_color_pages }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card text-white bg-warning h-100">
+                    <div class="card-body text-center">
+                        <i class="bi bi-people display-4 mb-2"></i>
+                        <h5 class="card-title">Aktive Benutzer</h5>
+                        <p class="card-text display-6">{{ users|length }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <h2 class="mb-3"><i class="bi bi-list-ul text-secondary me-2"></i>Jobs</h2>
+                
+                <form method="GET" class="mb-4 p-3 bg-light rounded">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label for="user_filter" class="form-label"><i class="bi bi-person me-1"></i>Filter nach Benutzer:</label>
+                            <select name="user" id="user_filter" class="form-select">
+                                <option value="">Alle Benutzer</option>
+                                {% for user in users %}
+                                <option value="{{ user }}" {% if request.args.get('user') == user %}selected{% endif %}>{{ user }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="color_filter" class="form-label"><i class="bi bi-palette me-1"></i>Filter nach Farbmodus:</label>
+                            <select name="color" id="color_filter" class="form-select">
+                                <option value="">Alle Modi</option>
+                                <option value="FULL_COLOR" {% if request.args.get('color') == 'FULL_COLOR' %}selected{% endif %}>Vollfarbe</option>
+                                <option value="MIXED" {% if request.args.get('color') == 'MIXED' %}selected{% endif %}>Gemischt</option>
+                                <option value="MONOCHROME" {% if request.args.get('color') == 'MONOCHROME' %}selected{% endif %}>Schwarzweiß</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label for="per_page" class="form-label"><i class="bi bi-list me-1"></i>Pro Seite:</label>
+                            <select name="per_page" id="per_page" class="form-select">
+                                <option value="50" {% if request.args.get('per_page', '50') == '50' %}selected{% endif %}>50</option>
+                                <option value="100" {% if request.args.get('per_page') == '100' %}selected{% endif %}>100</option>
+                                <option value="250" {% if request.args.get('per_page') == '250' %}selected{% endif %}>250</option>
+                                <option value="500" {% if request.args.get('per_page') == '500' %}selected{% endif %}>500</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary me-2"><i class="bi bi-funnel me-1"></i>Filtern</button>
+                            <a href="/stats/{{ printer.id }}" class="btn btn-outline-secondary"><i class="bi bi-x-circle me-1"></i>Zurücksetzen</a>
+                        </div>
+                    </div>
+                </form>
+                
+                <div class="table-responsive">
+                    <form id="jobs-form" method="POST" action="/delete_jobs" onsubmit="return confirm('Ausgewählte Jobs wirklich löschen?')">
+                        <table class="table table-hover table-striped">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th><input type="checkbox" id="select-all" class="form-check-input"></th>
+                                    <th><a href="{{ url_for('stats', printer_id=printer.id, user=request.args.get('user'), color=request.args.get('color'), per_page=request.args.get('per_page'), sort='job_number', order='asc' if sort=='job_number' and order=='desc' else 'desc') }}" class="text-white text-decoration-none"><i class="bi bi-hash me-1"></i>Job Nummer {% if sort=='job_number' %}<i class="bi bi-chevron-{{ 'up' if order=='asc' else 'down' }}"></i>{% endif %}</a></th>
+                                    <th><a href="{{ url_for('stats', printer_id=printer.id, user=request.args.get('user'), color=request.args.get('color'), per_page=request.args.get('per_page'), sort='job_kind', order='asc' if sort=='job_kind' and order=='desc' else 'desc') }}" class="text-white text-decoration-none"><i class="bi bi-tag me-1"></i>Job Art {% if sort=='job_kind' %}<i class="bi bi-chevron-{{ 'up' if order=='asc' else 'down' }}"></i>{% endif %}</a></th>
+                                    <th><a href="{{ url_for('stats', printer_id=printer.id, user=request.args.get('user'), color=request.args.get('color'), per_page=request.args.get('per_page'), sort='job_name', order='asc' if sort=='job_name' and order=='desc' else 'desc') }}" class="text-white text-decoration-none"><i class="bi bi-file-text me-1"></i>Name {% if sort=='job_name' %}<i class="bi bi-chevron-{{ 'up' if order=='asc' else 'down' }}"></i>{% endif %}</a></th>
+                                    <th><a href="{{ url_for('stats', printer_id=printer.id, user=request.args.get('user'), color=request.args.get('color'), per_page=request.args.get('per_page'), sort='user_name', order='asc' if sort=='user_name' and order=='desc' else 'desc') }}" class="text-white text-decoration-none"><i class="bi bi-person me-1"></i>Benutzer {% if sort=='user_name' %}<i class="bi bi-chevron-{{ 'up' if order=='asc' else 'down' }}"></i>{% endif %}</a></th>
+                                    <th><a href="{{ url_for('stats', printer_id=printer.id, user=request.args.get('user'), color=request.args.get('color'), per_page=request.args.get('per_page'), sort='pages', order='asc' if sort=='pages' and order=='desc' else 'desc') }}" class="text-white text-decoration-none"><i class="bi bi-file-earmark me-1"></i>Seiten {% if sort=='pages' %}<i class="bi bi-chevron-{{ 'up' if order=='asc' else 'down' }}"></i>{% endif %}</a></th>
+                                    <th><i class="bi bi-palette me-1"></i>Farbmodus</th>
+                                    <th><a href="{{ url_for('stats', printer_id=printer.id, user=request.args.get('user'), color=request.args.get('color'), per_page=request.args.get('per_page'), sort='start_time', order='asc' if sort=='start_time' and order=='desc' else 'desc') }}" class="text-white text-decoration-none"><i class="bi bi-clock me-1"></i>Startzeit {% if sort=='start_time' %}<i class="bi bi-chevron-{{ 'up' if order=='asc' else 'down' }}"></i>{% endif %}</a></th>
+                                    <th><i class="bi bi-check-circle me-1"></i>Ergebnis</th>
+                                    <th><i class="bi bi-trash me-1"></i>Aktionen</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for job in jobs %}
+                                <tr>
+                                    <td><input type="checkbox" name="job_ids" value="{{ job.id }}" class="form-check-input job-checkbox"></td>
+                                    <td>{{ job.job_number }}</td>
+                                    <td>{{ job.job_kind }}</td>
+                                    <td>{{ job.job_name }}</td>
+                                    <td>{{ job.user_name }}</td>
+                                    <td>{{ job.pages }}</td>
+                                    <td>
+                                        {% if job.print_color_mode == 'FULL_COLOR' %}
+                                            <span class="badge bg-primary">Vollfarbe</span>
+                                        {% elif job.print_color_mode == 'MIXED' %}
+                                            <span class="badge bg-info">Gemischt</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">{{ job.print_color_mode }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ job.start_time.strftime('%d.%m.%Y %H:%M') }}</td>
+                                    <td>
+                                        {% if job.job_result == 'OK' %}
+                                            <span class="badge bg-success">OK</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">{{ job.job_result }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <form method="POST" action="/delete_job/{{ job.id }}" onsubmit="return confirm('Job wirklich löschen?')" style="display:inline;">
+                                            <button type="submit" class="btn btn-sm btn-danger"><i class="bi bi-trash"></i></button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        
+                        <div class="d-flex justify-content-between align-items-center mt-3">
+                            <button type="submit" class="btn btn-danger" id="bulk-delete-btn" disabled><i class="bi bi-trash me-1"></i>Ausgewählte löschen</button>
+                            <small class="text-muted">{{ jobs|length }} Jobs auf dieser Seite</small>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- Pagination -->
+                {% if pagination.has_prev or pagination.has_next %}
+                <nav aria-label="Job pagination" class="mt-3">
+                    <ul class="pagination justify-content-center">
+                        {% if pagination.has_prev %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('stats', printer_id=printer.id, user=request.args.get('user'), color=request.args.get('color'), per_page=request.args.get('per_page'), page=pagination.prev_num) }}">
+                                <i class="bi bi-chevron-left"></i> Vorherige
+                            </a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link"><i class="bi bi-chevron-left"></i> Vorherige</span>
+                        </li>
+                        {% endif %}
+                        
+                        {% for page_num in pagination.iter_pages() %}
+                        {% if page_num %}
+                        <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
+                            <a class="page-link" href="{{ url_for('stats', printer_id=printer.id, user=request.args.get('user'), color=request.args.get('color'), per_page=request.args.get('per_page'), page=page_num) }}">{{ page_num }}</a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                        {% endif %}
+                        {% endfor %}
+                        
+                        {% if pagination.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('stats', printer_id=printer.id, user=request.args.get('user'), color=request.args.get('color'), per_page=request.args.get('per_page'), page=pagination.next_num) }}">
+                                Nächste <i class="bi bi-chevron-right"></i>
+                            </a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">Nächste <i class="bi bi-chevron-right"></i></span>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+                
+                <p class="text-muted mt-2">Seite {{ pagination.page }} von {{ pagination.pages }} ({{ pagination.total }} Jobs insgesamt)</p>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Select all checkbox functionality
+        document.getElementById('select-all').addEventListener('change', function() {
+            const checkboxes = document.querySelectorAll('.job-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = this.checked;
+            });
+            updateBulkDeleteButton();
+        });
+        
+        // Update bulk delete button state when individual checkboxes change
+        document.querySelectorAll('.job-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', updateBulkDeleteButton);
+        });
+        
+        function updateBulkDeleteButton() {
+            const checkedBoxes = document.querySelectorAll('.job-checkbox:checked');
+            const bulkDeleteBtn = document.getElementById('bulk-delete-btn');
+            bulkDeleteBtn.disabled = checkedBoxes.length === 0;
+        }
+        
+        // Initial state
+        updateBulkDeleteButton();
+    </script>
+</body>
+</html>

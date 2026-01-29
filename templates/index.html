@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kyocera Printer Reports</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        body { background-color: #f8f9fa; }
+        .card { transition: transform 0.2s; }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .navbar { background: linear-gradient(90deg, #007bff, #0056b3); }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#"><i class="bi bi-printer-fill me-2"></i>Kyocera Printer Reports</a>
+        </div>
+    </nav>
+    
+    <div class="container mt-5">
+        <div class="row">
+            <div class="col-12">
+                <h1 class="text-center mb-4"><i class="bi bi-graph-up text-primary me-2"></i>Drucker Übersicht</h1>
+                <p class="text-center text-muted">Wählen Sie einen Drucker aus, um detaillierte Statistiken zu sehen.</p>
+            </div>
+        </div>
+        
+        <div class="row" id="printers">
+            {% for printer in printers %}
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100 border-primary">
+                    <div class="card-body text-center">
+                        <i class="bi bi-printer display-4 text-primary mb-3"></i>
+                        <h5 class="card-title">{{ printer.equipment_id }}</h5>
+                        <p class="card-text text-muted">Modell: {{ printer.model_name }}<br>Seriennummer: {{ printer.serial_number }}</p>
+                        <a href="/stats/{{ printer.id }}" class="btn btn-primary"><i class="bi bi-bar-chart-line me-1"></i>Statistiken anzeigen</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div class="row mt-4">
+            <div class="col-12 text-center">
+                <button id="fetch-btn" class="btn btn-success btn-lg"><i class="bi bi-envelope-check me-2"></i>Neue E-Mails abrufen</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        $('#fetch-btn').click(function() {
+            $(this).prop('disabled', true).html('<i class="bi bi-hourglass-split me-2"></i>Lade...');
+            $.post('/api/fetch_emails', function(data) {
+                alert(data.message);
+                location.reload();
+            }).fail(function() {
+                alert('Fehler beim Abrufen der E-Mails.');
+                $('#fetch-btn').prop('disabled', false).html('<i class="bi bi-envelope-check me-2"></i>Neue E-Mails abrufen');
+            });
+        });
+    </script>
+</body>
+</html>
