@@ -1,6 +1,6 @@
 services:
   web:
-    build: .
+    image: ghcr.io/lordimac/kyocera_reports:latest
     ports:
       - "5000:5000"
     environment:
@@ -10,4 +10,4 @@ services:
       - POP3_USERNAME=${POP3_USERNAME}
       - POP3_PASSWORD=${POP3_PASSWORD}
     volumes:
-      - .:/app
+      - ./data:/app/data
