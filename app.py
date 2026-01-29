@@ -14,8 +14,12 @@ data_dir = os.path.join(os.getcwd(), 'data')
 os.makedirs(data_dir, exist_ok=True)
 print(f"Data directory: {data_dir} (exists: {os.path.exists(data_dir)}, writable: {os.access(data_dir, os.W_OK)})")
 
+# Use absolute path for database
+db_path = os.path.join(data_dir, 'kyocera_reports.db')
+default_db_uri = f'sqlite:///{db_path}'
+
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('SQLALCHEMY_DATABASE_URI', 'sqlite:///data/kyocera_reports.db')
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('SQLALCHEMY_DATABASE_URI', default_db_uri)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)
