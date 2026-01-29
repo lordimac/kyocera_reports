@@ -129,3 +129,16 @@ if __name__ == '__main__':
     scheduler_thread.start()
 
     app.run(debug=True, host='0.0.0.0', port=5000)
+else:
+    # Running under Gunicorn - initialize database and start scheduler
+    with app.app_context():
+        try:
+            db.create_all()
+            print("Database initialized successfully (Gunicorn)")
+        except Exception as e:
+            print(f"Error initializing database: {e}")
+    
+    # Start scheduler in background for Gunicorn
+    scheduler_thread = threading.Thread(target=run_scheduler)
+    scheduler_thread.daemon = True
+    scheduler_thread.start()
